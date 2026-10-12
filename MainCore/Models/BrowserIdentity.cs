@@ -40,9 +40,11 @@ namespace MainCore.Models
             : IdentityPlatform.Linux;
 
         /// <summary>
-        /// When the identity is the real host OS, Chrome already reports consistent values and nothing needs overriding.
+        /// When the identity is the real host OS on x64, Chrome already reports consistent values and nothing needs overriding.
+        /// An ARM host (e.g. Oracle Ampere VPS) reports "Linux aarch64" / "arm", which never matches an x86_64 user agent.
         /// </summary>
-        public bool RequiresOverride => Platform != HostPlatform;
+        public bool RequiresOverride =>
+            Platform != HostPlatform || System.Runtime.InteropServices.RuntimeInformation.OSArchitecture != System.Runtime.InteropServices.Architecture.X64;
 
         public static IdentityPlatform DetectPlatform(string? userAgent)
         {

@@ -26,6 +26,6 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v7
         with:
-          name: TravianBotSharp-linux-x64
-          path: dist/TravianBotSharp-linux-x64.tar.gz
+          name: TravianBotSharp-linux
+          path: dist/TravianBotSharp-linux-*.tar.gz
           if-no-files-found: error

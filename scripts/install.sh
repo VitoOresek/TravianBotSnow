@@ -14,8 +14,20 @@ for arg in "$@"; do
     esac
 done
 
-if [ "$(uname -m)" != "x86_64" ]; then
-    echo "Google only ships Chrome and chromedriver for x86_64 Linux, this machine is $(uname -m)."
+case "$(uname -m)" in
+    x86_64) MACHINE_ARCH="x64" ;;
+    aarch64|arm64) MACHINE_ARCH="arm64" ;;
+    *) echo "Google ships Chrome for x86_64 and arm64 Linux only, this machine is $(uname -m)."; exit 1 ;;
+esac
+# ELF e_machine at byte 18: 3e = x86-64, b7 = aarch64
+case "$(od -An -tx1 -j18 -N1 "$APP_DIR/TravianBotSharp" | tr -d ' ')" in
+    3e) BUILD_ARCH="x64" ;;
+    b7) BUILD_ARCH="arm64" ;;
+    *) BUILD_ARCH="unknown" ;;
+esac
+if [ "$BUILD_ARCH" != "$MACHINE_ARCH" ]; then
+    echo "This is the $BUILD_ARCH build but this machine is $(uname -m)."
+    echo "Download TravianBotSharp-linux-$MACHINE_ARCH.tar.gz instead."
     exit 1
 fi
 
@@ -37,7 +49,7 @@ $SUDO apt-get install -y wget ca-certificates fontconfig fonts-liberation \
 if ! command -v google-chrome-stable >/dev/null && ! command -v google-chrome >/dev/null; then
     echo "==> Installing Google Chrome (also adds Google's repository so apt keeps it updated)"
     TMP_DEB="$(mktemp --suffix=.deb)"
-    wget -q -O "$TMP_DEB" https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+    wget -q -O "$TMP_DEB" "https://dl.google.com/linux/direct/google-chrome-stable_current_$(dpkg --print-architecture).deb"
     $SUDO apt-get install -y "$TMP_DEB"
     rm -f "$TMP_DEB"
 else

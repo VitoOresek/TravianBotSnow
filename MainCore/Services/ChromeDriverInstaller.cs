@@ -193,9 +193,12 @@ namespace MainCore.Services
             if (OperatingSystem.IsWindows()) return "win64";
             if (OperatingSystem.IsLinux())
             {
-                if (RuntimeInformation.OSArchitecture != Architecture.X64)
-                    throw new PlatformNotSupportedException("Google only publishes chromedriver for linux x64. ARM servers are not supported.");
-                return "linux64";
+                return RuntimeInformation.OSArchitecture switch
+                {
+                    Architecture.X64 => "linux64",
+                    Architecture.Arm64 => "linux-arm64",
+                    _ => throw new PlatformNotSupportedException($"Google does not publish chromedriver for linux {RuntimeInformation.OSArchitecture}."),
+                };
             }
             if (OperatingSystem.IsMacOS()) return RuntimeInformation.OSArchitecture == Architecture.Arm64 ? "mac-arm64" : "mac-x64";
             throw new PlatformNotSupportedException("Your operating system is not supported.");

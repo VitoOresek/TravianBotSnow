@@ -28,6 +28,10 @@ namespace MainCore.Services
 
         public async Task Install()
         {
+            // no browser of this instance runs yet, any driver started from this folder is left over from a crash
+            var killed = StaleProcesses.KillDriver(DriverPath);
+            if (killed > 0) _logger.Warning("Closed {Count} leftover chromedriver processes", killed);
+
             ChromePath = FindChrome();
             ChromeVersion = await GetChromeVersion(ChromePath);
             _logger.Information("Found Chrome {Version} at {Path}", ChromeVersion, ChromePath);

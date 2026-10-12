@@ -26,7 +26,7 @@
             }
             catch (Exception ex)
             {
-                _ = ex;
+                logger.Error(ex, "Chrome failed to start: {Message}", ex.Message);
                 taskManager.SetStatus(accountId, StatusEnums.Offline);
                 return;
             }

@@ -99,6 +99,9 @@ namespace MainCore.Services
             pathUserData = Path.Combine(pathUserData, string.IsNullOrEmpty(setting.ProxyHost) ? "default" : setting.ProxyHost);
 
             options.AddArguments($"user-data-dir={pathUserData}");
+
+            var killed = StaleProcesses.KillChromeUsingProfile(pathUserData);
+            if (killed > 0) Logger.Warning("- Closed {Count} leftover chrome processes that kept this profile locked", killed);
             options.UseWebSocketUrl = true;
             options.UnhandledPromptBehavior = UnhandledPromptBehavior.Ignore;
 

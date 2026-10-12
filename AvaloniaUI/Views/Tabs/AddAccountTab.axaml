@@ -1,0 +1,45 @@
+<v:AddAccountTabBase
+    x:Class="AvaloniaUI.Views.Tabs.AddAccountTab"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:v="using:AvaloniaUI.Views.Tabs">
+    <Grid Classes="page" RowDefinitions="Auto,Auto,Auto,*,Auto">
+        <Border Classes="box">
+            <Grid Margin="5,0,5,0" RowDefinitions="Auto,Auto" ColumnDefinitions="*,3*">
+                <TextBox x:Name="ServerTextBox"   Grid.Row="0" Watermark="Server Url" UseFloatingWatermark="True" Margin="0,0,0,4" />
+                <TextBox x:Name="NicknameTextBox" Grid.Row="1" Watermark="Nickname"   UseFloatingWatermark="True" />
+            </Grid>
+        </Border>
+        <Border Classes="box" Grid.Row="1">
+            <Grid Margin="5,0,5,0" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="3*,1*,3*,5*">
+                <TextBox x:Name="UsernameTextBox"      Grid.Column="0" Grid.Row="0" Watermark="Username (*)"     UseFloatingWatermark="True" Margin="0,0,0,4" />
+                <TextBox x:Name="PasswordTextBox"      Grid.Column="2" Grid.Row="0" Watermark="Password (*)"     UseFloatingWatermark="True" Margin="0,0,0,4" />
+                <TextBox x:Name="ProxyHostTextBox"     Grid.Column="0" Grid.Row="1" Watermark="Proxy's host"     UseFloatingWatermark="True" Margin="0,0,0,4" />
+                <TextBox x:Name="ProxyPortTextBox"     Grid.Column="2" Grid.Row="1" Watermark="Proxy's port"     UseFloatingWatermark="True" Margin="0,0,0,4" />
+                <TextBox x:Name="ProxyUsernameTextBox" Grid.Column="0" Grid.Row="2" Watermark="Proxy's username" UseFloatingWatermark="True" />
+                <TextBox x:Name="ProxyPasswordTextBox" Grid.Column="2" Grid.Row="2" Watermark="Proxy's password" UseFloatingWatermark="True" />
+            </Grid>
+        </Border>
+        <Border Grid.Row="2" Margin="10">
+            <Grid ColumnDefinitions="4*,1*,4*,1*,4*">
+                <Button x:Name="AddAccessButton"    Grid.Column="0" Content="Add access" />
+                <Button x:Name="EditAccessButton"   Grid.Column="2" Content="Edit access" />
+                <Button x:Name="DeleteAccessButton" Grid.Column="4" Content="Delete access" />
+            </Grid>
+        </Border>
+        <Border Classes="box" Grid.Row="3">
+            <DataGrid x:Name="ProxiesDataGrid" IsReadOnly="True" AutoGenerateColumns="False" SelectionMode="Single" GridLinesVisibility="All">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Username"         Binding="{Binding Username}" />
+                    <DataGridTextColumn Header="Password"         Binding="{Binding Password}" />
+                    <DataGridTextColumn Header="Proxy's host"     Binding="{Binding ProxyHost}" />
+                    <DataGridTextColumn Header="Proxy's port"     Binding="{Binding ProxyPort}" />
+                    <DataGridTextColumn Header="Proxy's username" Binding="{Binding ProxyUsername}" />
+                    <DataGridTextColumn Header="Proxy's password" Binding="{Binding ProxyPassword}" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <Button x:Name="AddAccountButton" Content="Add account" Grid.Row="4" Margin="10" Classes="primary" />
+    </Grid>
+</v:AddAccountTabBase>

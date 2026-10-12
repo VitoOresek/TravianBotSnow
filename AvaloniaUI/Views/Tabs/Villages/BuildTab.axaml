@@ -1,0 +1,65 @@
+<v:BuildTabBase
+    x:Class="AvaloniaUI.Views.Tabs.Villages.BuildTab"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:v="using:AvaloniaUI.Views.Tabs.Villages">
+    <Grid ColumnDefinitions="*,2,*,2,*">
+        <Grid Grid.Column="0" RowDefinitions="Auto,*">
+            <Border Classes="box" Grid.Row="0">
+                <ListBox x:Name="QueueGrid" SelectionMode="Single" ItemTemplate="{StaticResource ListBoxItem}" />
+            </Border>
+            <Border Classes="box" Grid.Row="1">
+                <ListBox x:Name="BuildingsGrid" SelectionMode="Single" ItemTemplate="{StaticResource ListBoxBlackColorItem}">
+                    <ListBox.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem x:Name="UpgradeOneLevelButton" Header="Upgrade one level" />
+                            <MenuItem x:Name="UpgradeMaxLevelButton" Header="Upgrade max level" />
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
+                </ListBox>
+            </Border>
+        </Grid>
+        <Grid Grid.Column="2" RowDefinitions="Auto,Auto,*">
+            <Border Grid.Row="0" Classes="box">
+                <Grid RowDefinitions="Auto,Auto,5,Auto" ColumnDefinitions="Auto,*">
+                    <Label Grid.Row="0" Grid.Column="0" Content="Building" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                    <ComboBox x:Name="NormalBuildings" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Stretch" DisplayMemberBinding="{Binding Name}" />
+
+                    <Label Grid.Row="1" Grid.Column="0" Content="Level" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                    <TextBox x:Name="NormalLevel" Grid.Row="1" Grid.Column="1" Margin="0,4,0,0" />
+                    <Button x:Name="NormalBuild" Grid.Row="3" Grid.ColumnSpan="2" Content="Build" ToolTip.Tip="Build" Classes="primary" />
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="1" Classes="box">
+                <Grid RowDefinitions="Auto,Auto,5,Auto" ColumnDefinitions="Auto,*">
+                    <ComboBox x:Name="ResType" Grid.Row="0" Grid.ColumnSpan="2" VerticalAlignment="Center" HorizontalAlignment="Stretch" DisplayMemberBinding="{Binding Name}" />
+
+                    <Label Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center" Content="Level" />
+                    <TextBox x:Name="ResourceLevel" Grid.Row="1" Grid.Column="1" Margin="0,4,0,0" />
+                    <Button x:Name="ResourceBuild" Grid.Row="3" Grid.ColumnSpan="2" Content="Build" ToolTip.Tip="Build" Classes="primary" />
+                </Grid>
+            </Border>
+        </Grid>
+        <Grid Grid.Column="4" RowDefinitions="Auto,*">
+            <Grid Grid.Row="0" ColumnDefinitions="*,*">
+                <Button x:Name="ImportButton" Grid.Column="0" Content="Import" Margin="5" />
+                <Button x:Name="ExportButton" Grid.Column="1" Content="Export" Margin="5" />
+            </Grid>
+            <Border Grid.Row="1" Classes="box">
+                <ListBox x:Name="JobsGrid" SelectionMode="Single" ItemTemplate="{StaticResource ListBoxColorItem}">
+                    <ListBox.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem x:Name="TopButton"       Header="Top" />
+                            <MenuItem x:Name="UpButton"        Header="Up" />
+                            <MenuItem x:Name="DownButton"      Header="Down" />
+                            <MenuItem x:Name="BottomButton"    Header="Bottom" />
+                            <MenuItem x:Name="DeleteButton"    Header="Delete" />
+                            <MenuItem x:Name="DeleteAllButton" Header="Delete all" />
+                        </ContextMenu>
+                    </ListBox.ContextMenu>
+                </ListBox>
+            </Border>
+        </Grid>
+    </Grid>
+</v:BuildTabBase>

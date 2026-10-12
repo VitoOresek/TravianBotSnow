@@ -1,0 +1,14 @@
+<v:RangeInputUcBase
+    x:Class="AvaloniaUI.Views.UserControls.RangeInputUc"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:v="using:AvaloniaUI.Views.UserControls"
+    x:Name="root">
+    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Spacing="4" Margin="0,2,0,2">
+        <Label Content="{Binding #root.Text}" VerticalAlignment="Center" Margin="0,0,6,0" />
+        <TextBox x:Name="MinValue" Watermark="Min" Width="70" />
+        <Label Content="~" VerticalAlignment="Center" />
+        <TextBox x:Name="MaxValue" Watermark="Max" Width="70" />
+        <Label Content="{Binding #root.Unit}" VerticalAlignment="Center" />
+    </StackPanel>
+</v:RangeInputUcBase>

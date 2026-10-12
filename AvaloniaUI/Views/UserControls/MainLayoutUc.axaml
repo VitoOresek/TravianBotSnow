@@ -1,0 +1,57 @@
+<v:MainLayoutUcBase
+    x:Class="AvaloniaUI.Views.UserControls.MainLayoutUc"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:v="using:AvaloniaUI.Views.UserControls"
+    xmlns:tab="using:AvaloniaUI.Views.Tabs">
+    <Grid Margin="5" ColumnDefinitions="10*,45*">
+        <Grid Grid.Column="0" RowDefinitions="Auto,*,Auto">
+            <Grid Grid.Row="0" Margin="5,0,5,0" ColumnDefinitions="*,2,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+                <Button x:Name="AddAccountButton"  Content="Add account"  Grid.ColumnSpan="3" Grid.Row="0" Margin="0,0,0,2" />
+                <Button x:Name="AddAccountsButton" Content="Add accounts" Grid.ColumnSpan="3" Grid.Row="1" Margin="0,0,0,2" />
+                <Button x:Name="LoginButton"       Content="Login"        Grid.Column="0"     Grid.Row="2" Margin="0,0,0,2" />
+                <Button x:Name="LogoutButton"      Content="Logout"       Grid.Column="2"     Grid.Row="2" Margin="0,0,0,2" />
+                <Button x:Name="DeleteButton"      Content="Delete"       Grid.ColumnSpan="3" Grid.Row="3" Margin="0,0,0,2" />
+                <Button x:Name="PauseButton"       Content="Pause"        Grid.Column="0"     Grid.Row="4" Margin="0,0,0,2" />
+                <Button x:Name="RestartButton"     Content="Restart"      Grid.Column="2"     Grid.Row="4" Margin="0,0,0,2" />
+            </Grid>
+            <Border Classes="box" Grid.Row="1">
+                <ListBox x:Name="AccountGrid" SelectionMode="Single" ItemTemplate="{StaticResource ListBoxColorItem}" />
+            </Border>
+            <Border Classes="box" Grid.Row="2">
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="Version: " />
+                    <Label x:Name="Version" Content="30.4.1975" />
+                </StackPanel>
+            </Border>
+        </Grid>
+        <Border Classes="box" Grid.Column="1" Margin="10,0,0,5">
+            <TabControl>
+                <TabItem x:Name="NoAccountTab" Header="No account" IsSelected="True">
+                    <tab:NoAccountTab x:Name="NoAccount" />
+                </TabItem>
+                <TabItem x:Name="AddAccountTab" Header="Add account">
+                    <tab:AddAccountTab x:Name="AddAccount" />
+                </TabItem>
+                <TabItem x:Name="AddAccountsTab" Header="Add accounts">
+                    <tab:AddAccountsTab x:Name="AddAccounts" />
+                </TabItem>
+                <TabItem x:Name="AccountSettingTab" Header="Settings">
+                    <tab:AccountSettingTab x:Name="AccountSetting" />
+                </TabItem>
+                <TabItem x:Name="VillageTab" Header="Villages">
+                    <tab:VillageTab x:Name="Village" />
+                </TabItem>
+                <TabItem x:Name="FarmingTab" Header="Farming">
+                    <tab:FarmingTab x:Name="Farming" />
+                </TabItem>
+                <TabItem x:Name="EditAccountTab" Header="Edit account">
+                    <tab:EditAccountTab x:Name="EditAccount" />
+                </TabItem>
+                <TabItem x:Name="DebugTab" Header="Debug">
+                    <tab:DebugTab x:Name="Debug" />
+                </TabItem>
+            </TabControl>
+        </Border>
+    </Grid>
+</v:MainLayoutUcBase>

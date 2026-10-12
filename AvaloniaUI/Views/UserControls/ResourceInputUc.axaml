@@ -1,0 +1,18 @@
+<v:ResourceInputUcBase
+    x:Class="AvaloniaUI.Views.UserControls.ResourceInputUc"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:v="using:AvaloniaUI.Views.UserControls"
+    x:Name="root">
+    <StackPanel Orientation="Horizontal" Spacing="5" Margin="5,2,0,2">
+        <Label Content="{Binding #root.Text}" VerticalAlignment="Center" />
+        <Image Source="/Assets/wood.png" Stretch="None" VerticalAlignment="Center" Margin="5,0,0,0" />
+        <TextBox x:Name="Wood" Watermark="Wood" Width="60" />
+        <Image Source="/Assets/clay.png" Stretch="None" VerticalAlignment="Center" Margin="5,0,0,0" />
+        <TextBox x:Name="Clay" Watermark="Clay" Width="60" />
+        <Image Source="/Assets/iron.png" Stretch="None" VerticalAlignment="Center" Margin="5,0,0,0" />
+        <TextBox x:Name="Iron" Watermark="Iron" Width="60" />
+        <Image Source="/Assets/crop.png" Stretch="None" VerticalAlignment="Center" Margin="5,0,0,0" />
+        <TextBox x:Name="Crop" Watermark="Crop" Width="60" />
+    </StackPanel>
+</v:ResourceInputUcBase>

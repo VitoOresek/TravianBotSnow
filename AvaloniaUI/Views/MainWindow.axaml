@@ -1,0 +1,17 @@
+<v:MainWindowBase
+    x:Class="AvaloniaUI.Views.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:v="using:AvaloniaUI.Views"
+    xmlns:uc="using:AvaloniaUI.Views.UserControls"
+    Title="Travian Bot Sharp"
+    Icon="/Assets/favicon.ico"
+    WindowState="Maximized"
+    FontSize="13"
+    Width="1280" Height="720"
+    MinWidth="1024" MinHeight="512">
+    <Grid>
+        <uc:MainLayoutUc x:Name="MainLayout" />
+        <uc:WaitingOverlayUc x:Name="WaitingOverlay" />
+    </Grid>
+</v:MainWindowBase>

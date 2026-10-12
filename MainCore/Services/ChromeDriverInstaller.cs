@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Net.Http.Json;
@@ -12,32 +12,50 @@ using System.Text.RegularExpressions;
 namespace MainCore.Services
 {
     [RegisterSingleton<IChromeDriverInstaller, ChromeDriverInstaller>]
-    public sealed class ChromeDriverInstaller : IChromeDriverInstaller
+    public sealed partial class ChromeDriverInstaller(ILogger logger) : IChromeDriverInstaller
     {
+        private readonly ILogger _logger = logger.ForContext<ChromeDriverInstaller>();
         private readonly HttpClient httpClient = new();
 
         private const string apiEndpoint = "https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json";
 
+        /// <summary>Environment variable that overrides Chrome auto detection.</summary>
+        public const string ChromePathVariable = "TBS_CHROME_PATH";
+
+        public string ChromePath { get; private set; }
+        public Version ChromeVersion { get; private set; }
+        public string DriverPath => GetDriverPath();
+
         public async Task Install()
         {
-            CheckPlatform();
-            var chromeVersion = await GetChromeVersion();
+            ChromePath = FindChrome();
+            ChromeVersion = await GetChromeVersion(ChromePath);
+            _logger.Information("Found Chrome {Version} at {Path}", ChromeVersion, ChromePath);
 
-            if (chromeVersion.Major <= 114)
+            if (ChromeVersion.Major <= 114)
             {
-                throw new Exception($"Your chrome version is {chromeVersion}. Please update your chrome first");
+                throw new Exception($"Your chrome version is {ChromeVersion}. Please update your chrome first");
             }
 
             var chromeDriverVersion = await GetCurrentDriverVersion();
-            if (chromeDriverVersion.Major >= chromeVersion.Major)
+            if (chromeDriverVersion.Major != ChromeVersion.Major)
             {
-                return;
+                _logger.Information("Chromedriver {DriverVersion} does not match Chrome {ChromeVersion}, downloading", chromeDriverVersion, ChromeVersion);
+                await Download(ChromeVersion);
             }
-            await Download(chromeVersion);
 
-            if (!IsBinaryPatched())
+            if (!OperatingSystem.IsWindows())
             {
-                PatchExe();
+                File.SetUnixFileMode(DriverPath,
+                    UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
+                    UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
+                    UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
+            }
+
+            // always verify, an unpatched driver leaks the cdc_ marker to every page
+            if (PatchDriver(DriverPath))
+            {
+                _logger.Information("Patched chromedriver to remove the cdc_ automation marker");
             }
         }
 
@@ -49,23 +67,24 @@ namespace MainCore.Services
                 throw new Exception("Failed to get asset from chrome API");
             }
 
-            var orderedVersion = asset.Versions.OrderByDescending(x => x.Version);
+            var candidates = asset.Versions
+                .Where(x => x.Version.Major == chromeVersion.Major)
+                .Where(x => x.Downloads.ChromeDriver is not null)
+                .OrderByDescending(x => x.Version)
+                .ToList();
 
-            var version = orderedVersion.FirstOrDefault(x => x.Version.Major == chromeVersion.Major);
+            // prefer the exact build, otherwise the newest driver of the same major version
+            var version = candidates.Find(x => x.Version == chromeVersion) ?? candidates.FirstOrDefault();
             if (version is null)
             {
                 throw new Exception($"ChromeDriver version not found for Chrome version {chromeVersion}");
             }
 
-            if (version.Downloads.ChromeDriver is null)
-            {
-                throw new Exception($"ChromeDriver version not found for Chrome version {chromeVersion} [no download link ]");
-            }
-
-            var link = version.Downloads.ChromeDriver.Find(x => x.Platform == "win64");
+            var platform = GetPlatformName();
+            var link = version.Downloads.ChromeDriver.Find(x => x.Platform == platform);
             if (link is null)
             {
-                throw new Exception($"ChromeDriver version not found for Chrome version {chromeVersion} [no win64 download link]");
+                throw new Exception($"ChromeDriver version not found for Chrome version {chromeVersion} [no {platform} download link]");
             }
 
             var driverZipResponse = await httpClient.GetAsync(link.Url);
@@ -76,123 +95,115 @@ namespace MainCore.Services
 
             var driverName = GetDriverName();
             var targetPath = GetDriverPath();
+            var tempPath = $"{targetPath}.download";
 
-            using var zipFileStream = await driverZipResponse.Content.ReadAsStreamAsync();
-            using var zipArchive = new ZipArchive(zipFileStream, ZipArchiveMode.Read);
-            using var chromeDriverWriter = new FileStream(targetPath, FileMode.Create);
-            var entry = zipArchive.Entries.First(x => x.Name.Contains(driverName));
-            using Stream chromeDriverStream = entry.Open();
-            await chromeDriverStream.CopyToAsync(chromeDriverWriter);
+            using (var zipFileStream = await driverZipResponse.Content.ReadAsStreamAsync())
+            using (var zipArchive = new ZipArchive(zipFileStream, ZipArchiveMode.Read))
+            {
+                // exact match: the linux archive also holds LICENSE.chromedriver and THIRD_PARTY_NOTICES.chromedriver
+                var entry = zipArchive.Entries.First(x => x.Name == driverName);
+                using var chromeDriverStream = entry.Open();
+                using var chromeDriverWriter = new FileStream(tempPath, FileMode.Create);
+                await chromeDriverStream.CopyToAsync(chromeDriverWriter);
+            }
+
+            File.Move(tempPath, targetPath, true);
+            _logger.Information("Downloaded chromedriver {Version} ({Platform})", version.Version, platform);
         }
 
-        private static bool IsBinaryPatched()
+        [GeneratedRegex(@"\{window\.cdc.*?;\}")]
+        private static partial Regex CdcRegex();
+
+        /// <summary>
+        /// Replaces the injected <c>{window.cdc_...;}</c> block with a same-length dummy, the technique used by undetected-chromedriver.
+        /// Works on PE and ELF binaries alike because the byte length never changes.
+        /// </summary>
+        /// <returns>true if the binary was modified</returns>
+        public static bool PatchDriver(string driverPath)
         {
-            var targetPath = GetDriverPath();
-            using var fs = new FileStream(targetPath, FileMode.Open, FileAccess.Read);
-            using var reader = new StreamReader(fs, Encoding.GetEncoding("ISO-8859-1"));
+            var latin1 = Encoding.Latin1;
+            var content = latin1.GetString(File.ReadAllBytes(driverPath));
 
-            while (true)
-            {
-                var line = reader.ReadLine();
-                if (line is null)
-                    break;
-                if (line.Contains("undetected chromedriver"))
-                    return true;
-            }
-            return false;
+            if (!CdcRegex().IsMatch(content)) return false;
+
+            var patched = CdcRegex().Replace(content, match => "{tbs}".PadRight(match.Length, ' '));
+            File.WriteAllBytes(driverPath, latin1.GetBytes(patched));
+            return true;
         }
 
-        private static void PatchExe()
+        public static bool IsDriverPatched(string driverPath)
         {
-            var targetPath = GetDriverPath();
-            using var fs = new FileStream(targetPath, FileMode.Open, FileAccess.ReadWrite);
-
-            var buffer = new byte[1024];
-            var stringBuilder = new StringBuilder();
-
-            var read = 0;
-            while (true)
-            {
-                read = fs.Read(buffer, 0, buffer.Length);
-                if (read == 0)
-                    break;
-                stringBuilder.Append(
-                    Encoding.GetEncoding("ISO-8859-1").GetString(buffer, 0, read));
-            }
-
-            var content = stringBuilder.ToString();
-            var match = Regex.Match(content.ToString(), @"\{window\.cdc.*?;\}");
-            if (match.Success)
-            {
-                var target = match.Value;
-                var newTarget = "{tbs}"
-                    .PadRight(target.Length, ' ');
-                var newContent = content.Replace(target, newTarget);
-
-                fs.Seek(0, SeekOrigin.Begin);
-                var bytes = Encoding.GetEncoding("ISO-8859-1").GetBytes(newContent);
-                fs.Write(bytes, 0, bytes.Length);
-            }
+            var content = Encoding.Latin1.GetString(File.ReadAllBytes(driverPath));
+            return !CdcRegex().IsMatch(content);
         }
 
-        private static async Task<Version> GetCurrentDriverVersion()
+        [GeneratedRegex(@"(\d+)\.(\d+)\.(\d+)\.(\d+)")]
+        private static partial Regex VersionRegex();
+
+        public static Version ParseVersion(string output)
+        {
+            var match = VersionRegex().Match(output ?? "");
+            if (!match.Success) throw new FormatException($"Cannot find a version number in '{output?.Trim()}'");
+            return new Version(match.Value);
+        }
+
+        private async Task<Version> GetCurrentDriverVersion()
         {
             var targetPath = GetDriverPath();
             if (!File.Exists(targetPath)) return new Version(0, 0, 0, 0);
 
+            try
+            {
+                if (!OperatingSystem.IsWindows())
+                {
+                    File.SetUnixFileMode(targetPath, File.GetUnixFileMode(targetPath) | UnixFileMode.UserExecute);
+                }
+                // expected output is something like "ChromeDriver 88.0.4324.96 (68dba2d8a0b149a1d3afac56fa74648032bcf46b-refs/branch-heads/4324@{#1784})"
+                var output = await RunAndRead(targetPath, "--version");
+                return ParseVersion(output);
+            }
+            catch (Exception ex)
+            {
+                _logger.Warning(ex, "Existing chromedriver is not usable, it will be replaced");
+                return new Version(0, 0, 0, 0);
+            }
+        }
+
+        private static async Task<string> RunAndRead(string fileName, string argument)
+        {
             using var process = Process.Start(
                 new ProcessStartInfo
                 {
-                    FileName = targetPath,
-                    ArgumentList = { "--version" },
+                    FileName = fileName,
+                    ArgumentList = { argument },
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                 }
             );
-            string existingChromeDriverVersion = await process.StandardOutput.ReadToEndAsync();
-            string error = await process.StandardError.ReadToEndAsync();
+            var output = await process.StandardOutput.ReadToEndAsync();
+            await process.StandardError.ReadToEndAsync();
             await process.WaitForExitAsync();
-            process.Kill(true);
-
-            // expected output is something like "ChromeDriver 88.0.4324.96 (68dba2d8a0b149a1d3afac56fa74648032bcf46b-refs/branch-heads/4324@{#1784})"
-            // the following line will extract the version number and leave the rest
-            existingChromeDriverVersion = existingChromeDriverVersion.Split(" ")[1];
-
-            var version = new Version(existingChromeDriverVersion);
-
-            if (!string.IsNullOrEmpty(error))
-            {
-                var driverName = GetDriverName();
-                throw new Exception($"Failed to execute {driverName} --version");
-            }
-
-            return version;
+            return output;
         }
 
-        private static void CheckPlatform()
+        private static string GetPlatformName()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            { return; }
+            if (OperatingSystem.IsWindows()) return "win64";
+            if (OperatingSystem.IsLinux())
+            {
+                if (RuntimeInformation.OSArchitecture != Architecture.X64)
+                    throw new PlatformNotSupportedException("Google only publishes chromedriver for linux x64. ARM servers are not supported.");
+                return "linux64";
+            }
+            if (OperatingSystem.IsMacOS()) return RuntimeInformation.OSArchitecture == Architecture.Arm64 ? "mac-arm64" : "mac-x64";
             throw new PlatformNotSupportedException("Your operating system is not supported.");
         }
 
         private static string GetDriverName()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                return "chromedriver.exe";
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                return "chromedriver";
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                return "chromedriver";
-            }
-            return "";
+            return OperatingSystem.IsWindows() ? "chromedriver.exe" : "chromedriver";
         }
 
         private static string GetDriverPath()
@@ -203,87 +214,92 @@ namespace MainCore.Services
             return targetPath;
         }
 
-        private static async Task<Version> GetChromeVersion()
+        private static readonly string[] LinuxChromeCommands =
+        [
+            "google-chrome-stable",
+            "google-chrome",
+        ];
+
+        private static readonly string[] LinuxChromePaths =
+        [
+            "/opt/google/chrome/chrome",
+            "/usr/bin/google-chrome-stable",
+            "/usr/bin/google-chrome",
+        ];
+
+        public static string FindChrome()
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            var custom = Environment.GetEnvironmentVariable(ChromePathVariable);
+            if (!string.IsNullOrWhiteSpace(custom))
             {
-                string chromePath = (string)Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\chrome.exe", null, null);
-                if (chromePath == null)
+                if (!File.Exists(custom)) throw new FileNotFoundException($"{ChromePathVariable} points to a missing file", custom);
+                return custom;
+            }
+
+            if (OperatingSystem.IsWindows())
+            {
+                var chromePath = Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\chrome.exe", null, null) as string;
+                if (chromePath is null || !File.Exists(chromePath))
                 {
                     throw new Exception("Google Chrome not found in registry");
                 }
+                return chromePath;
+            }
 
+            if (OperatingSystem.IsLinux())
+            {
+                foreach (var command in LinuxChromeCommands)
+                {
+                    var path = FindInPath(command);
+                    if (path is not null) return path;
+                }
+
+                foreach (var path in LinuxChromePaths)
+                {
+                    if (File.Exists(path)) return path;
+                }
+
+                throw new Exception($"Google Chrome not found. Install it with scripts/install-deps.sh or set {ChromePathVariable}");
+            }
+
+            if (OperatingSystem.IsMacOS())
+            {
+                const string macPath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+                if (File.Exists(macPath)) return macPath;
+                throw new Exception($"Google Chrome not found. Set {ChromePathVariable}");
+            }
+
+            throw new PlatformNotSupportedException("Your operating system is not supported.");
+        }
+
+        private static string FindInPath(string command)
+        {
+            var pathVariable = Environment.GetEnvironmentVariable("PATH") ?? "";
+            foreach (var directory in pathVariable.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
+            {
+                var candidate = Path.Combine(directory, command);
+                if (File.Exists(candidate)) return candidate;
+            }
+            return null;
+        }
+
+        private static async Task<Version> GetChromeVersion(string chromePath)
+        {
+            if (OperatingSystem.IsWindows())
+            {
                 var fileVersionInfo = FileVersionInfo.GetVersionInfo(chromePath);
                 return new Version(fileVersionInfo.FileVersion);
             }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+
+            try
             {
-                try
-                {
-                    using var process = Process.Start(
-                        new ProcessStartInfo
-                        {
-                            FileName = "google-chrome",
-                            ArgumentList = { "--product-version" },
-                            UseShellExecute = false,
-                            CreateNoWindow = true,
-                            RedirectStandardOutput = true,
-                            RedirectStandardError = true,
-                        }
-                    );
-                    string output = await process.StandardOutput.ReadToEndAsync();
-                    string error = await process.StandardError.ReadToEndAsync();
-                    await process.WaitForExitAsync();
-                    process.Kill(true);
-
-                    if (!string.IsNullOrEmpty(error))
-                    {
-                        throw new Exception(error);
-                    }
-
-                    return new Version(output);
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception("An error occurred trying to execute 'google-chrome --product-version'", ex);
-                }
+                // "Google Chrome 142.0.7444.59 " on linux and macOS
+                var output = await RunAndRead(chromePath, "--version");
+                return ParseVersion(output);
             }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            catch (Exception ex)
             {
-                try
-                {
-                    using var process = Process.Start(
-                        new ProcessStartInfo
-                        {
-                            FileName = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-                            ArgumentList = { "--version" },
-                            UseShellExecute = false,
-                            CreateNoWindow = true,
-                            RedirectStandardOutput = true,
-                            RedirectStandardError = true,
-                        }
-                    );
-                    string output = await process.StandardOutput.ReadToEndAsync();
-                    string error = await process.StandardError.ReadToEndAsync();
-                    await process.WaitForExitAsync();
-                    process.Kill(true);
-
-                    if (!string.IsNullOrEmpty(error))
-                    {
-                        throw new Exception(error);
-                    }
-
-                    output = output.Replace("Google Chrome ", "");
-                    return new Version(output);
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception($"An error occurred trying to execute '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome --version'", ex);
-                }
-            }
-            else
-            {
-                throw new PlatformNotSupportedException("Your operating system is not supported.");
+                throw new Exception($"An error occurred trying to execute '{chromePath} --version'", ex);
             }
         }
     }

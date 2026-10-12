@@ -1,0 +1,29 @@
+<v:FarmingTabBase
+    x:Class="AvaloniaUI.Views.Tabs.FarmingTab"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:v="using:AvaloniaUI.Views.Tabs"
+    xmlns:uc="using:AvaloniaUI.Views.UserControls">
+    <Grid Classes="page" ColumnDefinitions="1*,4*">
+        <Grid Grid.Column="0" RowDefinitions="*,Auto">
+            <Border Classes="box" Grid.Row="0">
+                <ListBox x:Name="FarmlistGrid" SelectionMode="Single" ItemTemplate="{StaticResource ListBoxColorItem}" />
+            </Border>
+            <Button x:Name="Load" Grid.Row="1" Content="Load farmlist" ToolTip.Tip="Load farmlist" Margin="5,0,5,5" />
+        </Grid>
+        <Border Classes="box" Grid.Column="1">
+            <Grid RowDefinitions="Auto,*,Auto,Auto">
+                <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <StackPanel Margin="0,20,0,0">
+                        <uc:RangeInputUc x:Name="FarmInterval" Text="Start farm delay" Unit="s" />
+                        <CheckBox x:Name="UseStartAllCheckbox" Content="Use Start all button (ignore active settings)" />
+                    </StackPanel>
+                    <Button x:Name="SaveButton" Content="Save" ToolTip.Tip="Save" Margin="10" VerticalAlignment="Center" Classes="primary" />
+                </StackPanel>
+                <Button x:Name="ActiveButton" Grid.Row="1" Margin="10" VerticalAlignment="Stretch" VerticalContentAlignment="Center" />
+                <Button x:Name="StartButton"  Grid.Row="2" Content="Start" ToolTip.Tip="Start" Margin="10" />
+                <Button x:Name="StopButton"   Grid.Row="3" Content="Stop"  ToolTip.Tip="Stop"  Margin="10" />
+            </Grid>
+        </Border>
+    </Grid>
+</v:FarmingTabBase>

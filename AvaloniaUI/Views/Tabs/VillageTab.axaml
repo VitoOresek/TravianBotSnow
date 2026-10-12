@@ -1,0 +1,34 @@
+<v:VillageTabBase
+    x:Class="AvaloniaUI.Views.Tabs.VillageTab"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:v="using:AvaloniaUI.Views.Tabs"
+    xmlns:vtab="using:AvaloniaUI.Views.Tabs.Villages">
+    <Grid Classes="page" ColumnDefinitions="1*,4*">
+        <Border Classes="box" Grid.Column="0">
+            <ListBox x:Name="VillagesGrid" SelectionMode="Single" ItemTemplate="{StaticResource ListBoxColorItem}">
+                <ListBox.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem x:Name="LoadCurrent" Header="Reload this village's building" />
+                        <MenuItem x:Name="LoadUnload"  Header="Reload village that missing building" />
+                        <MenuItem x:Name="LoadAll"     Header="Reload all village" />
+                    </ContextMenu>
+                </ListBox.ContextMenu>
+            </ListBox>
+        </Border>
+
+        <Border Classes="box" Grid.Column="1">
+            <TabControl Margin="10,0,0,0">
+                <TabItem x:Name="NoVillageTab" Header="No village" IsSelected="True">
+                    <vtab:NoVillageTab x:Name="NoVillage" />
+                </TabItem>
+                <TabItem x:Name="BuildTab" Header="Build">
+                    <vtab:BuildTab x:Name="Build" />
+                </TabItem>
+                <TabItem x:Name="SettingsTab" Header="Settings">
+                    <vtab:VillageSettingTab x:Name="Settings" />
+                </TabItem>
+            </TabControl>
+        </Border>
+    </Grid>
+</v:VillageTabBase>

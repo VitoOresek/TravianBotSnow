@@ -723,7 +723,7 @@
         "contentHash": "zteT+G8xuGu6mS+mzDzYXbzS7rd3K6Fjb9RiZlYlJPam2/hU7JCBZBVEcywNuR+oZ1ncTvc/cq0faRr3P01OVg=="
       }
     },
-    "net8.0/win-x64": {
+    "net8.0/linux-x64": {
       "Selenium.WebDriver": {
         "type": "Direct",
         "requested": "[4.38.0, )",

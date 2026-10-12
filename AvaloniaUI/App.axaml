@@ -1,0 +1,24 @@
+<Application
+    x:Class="AvaloniaUI.App"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converter="using:AvaloniaUI.Converter"
+    RequestedThemeVariant="Light">
+    <Application.Resources>
+        <converter:SplatColorToBrushConverter x:Key="ColorConverter" />
+        <DataTemplate x:Key="ListBoxItem">
+            <TextBlock Text="{Binding Content}" />
+        </DataTemplate>
+        <DataTemplate x:Key="ListBoxColorItem">
+            <TextBlock Text="{Binding Content}" Foreground="{Binding Color, Converter={StaticResource ColorConverter}}" />
+        </DataTemplate>
+        <DataTemplate x:Key="ListBoxBlackColorItem">
+            <TextBlock Text="{Binding Content}" Foreground="{Binding Color, Converter={StaticResource ColorConverter}}" Background="Black" />
+        </DataTemplate>
+    </Application.Resources>
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+        <StyleInclude Source="avares://TravianBotSharp/Styles/AppStyles.axaml" />
+    </Application.Styles>
+</Application>

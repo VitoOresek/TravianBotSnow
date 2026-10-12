@@ -1,0 +1,24 @@
+<v:TroopSelectorUcBase
+    x:Class="AvaloniaUI.Views.UserControls.TroopSelectorUc"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:v="using:AvaloniaUI.Views.UserControls"
+    xmlns:converter="using:AvaloniaUI.Converter"
+    x:Name="root">
+    <v:TroopSelectorUcBase.Resources>
+        <converter:TroopItemToCroppedBitmap x:Key="TroopItemConverter" />
+    </v:TroopSelectorUcBase.Resources>
+    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Spacing="6" Margin="0,2,0,2">
+        <Label Content="{Binding #root.Text}" VerticalAlignment="Center" />
+        <ComboBox x:Name="TroopComboBox" MinWidth="150">
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="{Binding ., Converter={StaticResource TroopItemConverter}}" Width="16" Height="16" />
+                        <TextBlock Text="{Binding Troop}" Margin="5,0,0,0" />
+                    </StackPanel>
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+    </StackPanel>
+</v:TroopSelectorUcBase>

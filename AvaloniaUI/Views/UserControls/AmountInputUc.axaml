@@ -1,0 +1,12 @@
+<v:AmountInputUcBase
+    x:Class="AvaloniaUI.Views.UserControls.AmountInputUc"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:v="using:AvaloniaUI.Views.UserControls"
+    x:Name="root">
+    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Spacing="6" Margin="5,2,0,2">
+        <Image Source="/Assets/granary.png" Stretch="None" VerticalAlignment="Center" />
+        <TextBox x:Name="Value" Watermark="{Binding #root.Text}" UseFloatingWatermark="True" MinWidth="70" />
+        <Label Content="{Binding #root.Unit}" VerticalAlignment="Center" />
+    </StackPanel>
+</v:AmountInputUcBase>

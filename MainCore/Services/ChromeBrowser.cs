@@ -23,24 +23,34 @@ namespace MainCore.Services
         private BrowsingContext? _context;
         private Intercept? _authIntercept;
 
-        public ChromeBrowser(string[] extensionsPath)
+        private readonly string _chromePath;
+        private readonly Version _chromeVersion;
+
+        public ChromeBrowser(string[] extensionsPath, string chromePath, Version chromeVersion, string driverPath)
         {
             _extensionsPath = extensionsPath;
+            _chromePath = chromePath;
+            _chromeVersion = chromeVersion;
 
-            _chromeService = ChromeDriverService.CreateDefaultService();
+            // point at the patched driver explicitly, otherwise Selenium Manager may fetch an unpatched one
+            _chromeService = ChromeDriverService.CreateDefaultService(Path.GetDirectoryName(driverPath), Path.GetFileName(driverPath));
             _chromeService.HideCommandPromptWindow = true;
         }
 
         public async Task Setup(ChromeSetting setting)
         {
-            var options = new ChromeOptions();
+            var options = new ChromeOptions
+            {
+                BinaryLocation = _chromePath,
+            };
 
             if (!string.IsNullOrEmpty(setting.ProxyHost))
             {
                 options.AddArgument($"--proxy-server={setting.ProxyHost}:{setting.ProxyPort}");
             }
 
-            options.AddArgument($"--user-agent={setting.UserAgent}");
+            var identity = BrowserIdentity.Create(setting.UserAgent, _chromeVersion);
+            options.AddArgument($"--user-agent={identity.UserAgent}");
             options.AddArgument("--ignore-certificate-errors");
             options.AddArguments("--no-default-browser-check", "--no-first-run", "--ash-no-nudges");
             options.AddArguments("--mute-audio", "--disable-gpu", "--disable-search-engine-choice-screen");
@@ -53,14 +63,31 @@ namespace MainCore.Services
 
             options.AddArgument("--disable-background-timer-throttling");
             options.AddArgument("--disable-backgrounding-occluded-windows");
+            // chrome only honours the last --disable-features switch, so every feature must be in one list.
+            // UserAgentClientHint stays enabled: the client hints are overridden to match the identity below,
+            // a Chrome user agent without navigator.userAgentData would itself stand out
             options.AddArgument("--disable-features=CalculateNativeWinOcclusion");
-            options.AddArgument("--disable-features=UserAgentClientHint");
             options.AddArgument("--disable-blink-features=AutomationControlled");
+
+            if (OperatingSystem.IsLinux())
+            {
+                // VPS images often ship a tiny /dev/shm which makes chrome tabs crash
+                options.AddArgument("--disable-dev-shm-usage");
+                // do not prompt for the gnome keyring on remote desktop sessions
+                options.AddArgument("--password-store=basic");
+                if (Environment.UserName == "root")
+                {
+                    // chrome refuses to start as root with the sandbox enabled
+                    options.AddArgument("--no-sandbox");
+                }
+            }
 
             if (setting.IsHeadless)
             {
                 options.AddArgument("--headless=new");
                 options.AddArgument("--disable-dev-shm-usage");
+                // headless defaults to an 800x600 screen which no real player has
+                options.AddArgument("--window-size=1920,1080");
             }
             else
             {
@@ -80,6 +107,8 @@ namespace MainCore.Services
             _driver.Manage().Timeouts().PageLoad = TimeSpan.FromMinutes(3);
             _wait = new WebDriverWait(_driver, TimeSpan.FromMinutes(3)); // watch ads
 
+            ApplyIdentity(identity);
+
             _bidi = await _driver.AsBiDiAsync();
             _context = (await _bidi.BrowsingContext.GetTreeAsync()).Contexts[0].Context;
 
@@ -97,6 +126,23 @@ namespace MainCore.Services
                     await auth.ContinueAsync(new AuthCredentials(setting.ProxyUsername, setting.ProxyPassword), new ContinueWithAuthCredentialsOptions());
                 });
             }
+        }
+
+        private void ApplyIdentity(BrowserIdentity identity)
+        {
+            if (_driver is null) return;
+
+            if (!identity.RequiresOverride)
+            {
+                Logger.Information("- Browser identity: {Identity}", identity);
+                return;
+            }
+
+            // makes navigator.platform, navigator.userAgentData and the Sec-CH-UA headers agree with the user agent
+            _driver.ExecuteCdpCommand("Emulation.setUserAgentOverride", identity.ToCdpParameters());
+            // recent Chrome ignores the platform field above (and Emulation.setNavigatorOverrides), so patch the getter before any page script runs
+            _driver.ExecuteCdpCommand("Page.addScriptToEvaluateOnNewDocument", new Dictionary<string, object> { ["source"] = identity.NavigatorPlatformScript });
+            Logger.Information("- Browser identity: {Identity} (spoofed on {Host})", identity, BrowserIdentity.HostPlatform);
         }
 
         public ChromeDriver? Driver => _driver;

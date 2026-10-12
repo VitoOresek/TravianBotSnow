@@ -1,0 +1,42 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style Selector="Border.box">
+        <Setter Property="Margin" Value="5" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="BorderBrush" Value="Gray" />
+        <Setter Property="Padding" Value="5" />
+    </Style>
+    <Style Selector="Border.overlay-background">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="Background" Value="DarkGray" />
+        <Setter Property="Opacity" Value=".7" />
+    </Style>
+    <Style Selector="Border.overlay-content">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Background" Value="AliceBlue" />
+        <Setter Property="BorderBrush" Value="Black" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="10,0,10,0" />
+        <Setter Property="BoxShadow" Value="0 1 4 0 #80000000" />
+    </Style>
+    <Style Selector="Grid.page">
+        <Setter Property="Background" Value="#FFE5E5E5" />
+    </Style>
+    <Style Selector="TextBlock.header">
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Margin" Value="0,0,0,4" />
+    </Style>
+    <Style Selector="Button">
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.primary">
+        <Setter Property="Background" Value="#FF03A9F4" />
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="CheckBox">
+        <Setter Property="Margin" Value="0,2,0,2" />
+    </Style>
+</Styles>

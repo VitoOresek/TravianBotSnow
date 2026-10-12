@@ -64,7 +64,9 @@ namespace MainCore.Services
 
         public string Get()
         {
-            var index = rnd.Next(0, _userAgentList.Count - 1);
+            // the stored agent only decides the OS family, see BrowserIdentity
+            if (_userAgentList.Count == 0) return "";
+            var index = rnd.Next(0, _userAgentList.Count);
             var result = _userAgentList[index];
             _userAgentList.RemoveAt(index);
             Save();

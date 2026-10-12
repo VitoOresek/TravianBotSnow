@@ -5,9 +5,10 @@ using System.Reflection;
 namespace MainCore.Services
 {
     [RegisterSingleton<IChromeManager, ChromeManager>]
-    public sealed class ChromeManager(ILogger logger) : IChromeManager
+    public sealed class ChromeManager(ILogger logger, IChromeDriverInstaller chromeDriverInstaller) : IChromeManager
     {
         private readonly ILogger _logger = logger.ForContext<ChromeManager>();
+        private readonly IChromeDriverInstaller _chromeDriverInstaller = chromeDriverInstaller;
         private readonly ConcurrentDictionary<AccountId, ChromeBrowser> _dictionary = new();
         private string[] _extensionsPath = default!;
 
@@ -17,7 +18,11 @@ namespace MainCore.Services
             {
                 return browser;
             }
-            browser = new ChromeBrowser(_extensionsPath);
+            browser = new ChromeBrowser(
+                _extensionsPath,
+                _chromeDriverInstaller.ChromePath,
+                _chromeDriverInstaller.ChromeVersion,
+                _chromeDriverInstaller.DriverPath);
             _dictionary.TryAdd(accountId, browser);
             return browser;
         }

@@ -10,6 +10,18 @@ namespace AvaloniaUI
         {
             // the database, logs, chrome profiles and screenshots use relative paths, keep them next to the binary
             Directory.SetCurrentDirectory(AppContext.BaseDirectory);
+
+            AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+            {
+                Serilog.Log.Fatal(e.ExceptionObject as Exception, "Unhandled exception, the bot is closing");
+                Serilog.Log.CloseAndFlush();
+            };
+            TaskScheduler.UnobservedTaskException += (_, e) =>
+            {
+                Serilog.Log.Error(e.Exception, "Unobserved task exception");
+                e.SetObserved();
+            };
+
             return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         }
 

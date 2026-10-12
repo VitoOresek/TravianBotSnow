@@ -60,7 +60,9 @@ namespace AvaloniaUI.Views
         }
 
         private async void OnClosing(object? sender, WindowClosingEventArgs e)
-        {            if (!_isLoaded)
+        {
+            Log.Information("Main window closing ({Reason}, programmatic: {IsProgrammatic})", e.CloseReason, e.IsProgrammatic);
+            if (!_isLoaded)
             {
                 e.Cancel = true;
                 return;

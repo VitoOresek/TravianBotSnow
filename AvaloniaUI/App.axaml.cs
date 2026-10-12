@@ -42,18 +42,30 @@ namespace AvaloniaUI
                 RxApp.MainThreadScheduler = AvaloniaScheduler.Instance;
                 RxApp.DefaultExceptionHandler = serviceProvider.GetRequiredService<ObservableExceptionHandler>();
 
+                // an exception in a binding or event handler must not take the whole bot (and its running tasks) down
+                Dispatcher.UIThread.UnhandledException += (_, e) =>
+                {
+                    Serilog.Log.Error(e.Exception, "UI exception");
+                    e.Handled = true;
+                };
+
                 var mainWindow = serviceProvider.GetRequiredService<MainWindow>();
                 DialogHandlers.Register(serviceProvider.GetRequiredService<IDialogService>(), mainWindow);
                 serviceProvider.GetRequiredService<IRxQueue>().Setup();
 
                 // Ctrl+C or SIGTERM: close the window so the browsers are shut down cleanly
                 serviceProvider.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping
-                    .Register(() => Dispatcher.UIThread.Post(mainWindow.Close));
+                    .Register(() =>
+                    {
+                        Serilog.Log.Information("Stop signal received, closing the bot");
+                        Dispatcher.UIThread.Post(mainWindow.Close);
+                    });
 
                 desktop.MainWindow = mainWindow;
                 desktop.ShutdownMode = ShutdownMode.OnMainWindowClose;
-                desktop.Exit += (_, _) =>
+                desktop.Exit += (_, e) =>
                 {
+                    Serilog.Log.Information("Bot exiting with code {ExitCode}", e.ApplicationExitCode);
                     host.StopAsync(TimeSpan.FromSeconds(10)).GetAwaiter().GetResult();
                     host.Dispose();
                 };

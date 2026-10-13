@@ -108,7 +108,19 @@
             CancellationToken cancellationToken
         )
         {
-            var (_, isFailed, element, errors) = await browser.GetElement(doc => UpgradeParser.GetSpecialUpgradeButton(doc), cancellationToken);
+            // the normal button proves the upgrade buttons are rendered
+            var (_, isFailed, _, errors) = await browser.GetElement(doc => UpgradeParser.GetUpgradeButton(doc), cancellationToken);
+            if (isFailed) return Result.Fail(errors);
+
+            // the video button is missing or grey when no ad is available (common behind proxies / datacenter IPs),
+            // waiting the full timeout for it would fail the task every time
+            if (UpgradeParser.GetSpecialUpgradeButton(browser.Html) is null)
+            {
+                browser.Logger.Information("Video upgrade is not available right now, using the normal upgrade button");
+                return await browser.Upgrade(cancellationToken);
+            }
+
+            (_, isFailed, var element, errors) = await browser.GetElement(doc => UpgradeParser.GetSpecialUpgradeButton(doc), cancellationToken);
             if (isFailed) return Result.Fail(errors);
 
             var result = await browser.Click(element, cancellationToken);

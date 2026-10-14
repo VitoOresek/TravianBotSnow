@@ -13,14 +13,16 @@ namespace MainCore.Behaviors
         private readonly UpdateAccountInfoCommand.Handler _updateAccountInfoCommand;
         private readonly UpdateVillageListCommand.Handler _updateVillageListCommand;
         private readonly UpdateAdventureCommand.Handler _updateAdventureCommand;
+        private readonly UpdateHeroPointsCommand.Handler _updateHeroPointsCommand;
 
-        public AccountTaskBehavior(IChromeBrowser browser, ITaskManager taskManager, UpdateAccountInfoCommand.Handler updateAccountInfoCommand, UpdateVillageListCommand.Handler updateVillageListCommand, UpdateAdventureCommand.Handler updateAdventureCommand)
+        public AccountTaskBehavior(IChromeBrowser browser, ITaskManager taskManager, UpdateAccountInfoCommand.Handler updateAccountInfoCommand, UpdateVillageListCommand.Handler updateVillageListCommand, UpdateAdventureCommand.Handler updateAdventureCommand, UpdateHeroPointsCommand.Handler updateHeroPointsCommand)
         {
             _browser = browser;
             _taskManager = taskManager;
             _updateAccountInfoCommand = updateAccountInfoCommand;
             _updateVillageListCommand = updateVillageListCommand;
             _updateAdventureCommand = updateAdventureCommand;
+            _updateHeroPointsCommand = updateHeroPointsCommand;
         }
 
         public override async ValueTask<TResponse> HandleAsync(TRequest request, CancellationToken cancellationToken)
@@ -54,6 +56,7 @@ namespace MainCore.Behaviors
                 await _updateAccountInfoCommand.HandleAsync(new(accountId), cancellationToken);
                 await _updateVillageListCommand.HandleAsync(new(accountId), cancellationToken);
                 await _updateAdventureCommand.HandleAsync(new(accountId), cancellationToken);
+                await _updateHeroPointsCommand.HandleAsync(new(accountId), cancellationToken);
             }
 
             return response;

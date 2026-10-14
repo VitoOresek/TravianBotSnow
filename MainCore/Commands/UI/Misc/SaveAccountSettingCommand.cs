@@ -69,6 +69,22 @@
                     taskManager.Remove<StartAdventureTask.Task>(accountId);
                 }
             }
+
+            if (settings.ContainsKey(AccountSettingEnums.EnableAutoAssignHeroPoints))
+            {
+                if (settings[AccountSettingEnums.EnableAutoAssignHeroPoints] == 1)
+                {
+                    var task = new AssignHeroPointsTask.Task(accountId);
+                    if (task.CanStart(context) && !taskManager.IsExist<AssignHeroPointsTask.Task>(accountId))
+                    {
+                        taskManager.Add(task);
+                    }
+                }
+                else
+                {
+                    taskManager.Remove<AssignHeroPointsTask.Task>(accountId);
+                }
+            }
         }
     }
 }

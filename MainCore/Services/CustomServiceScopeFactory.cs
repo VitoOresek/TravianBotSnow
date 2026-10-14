@@ -77,6 +77,10 @@ namespace MainCore.Services
                     var sleepTaskHandler = scope.GetHandler<SleepTask.Task>();
                     return await sleepTaskHandler.HandleAsync(sleepTask, cancellationToken);
 
+                case AssignHeroPointsTask.Task assignHeroPointsTask:
+                    var assignHeroPointsTaskHandler = scope.GetHandler<AssignHeroPointsTask.Task>();
+                    return await assignHeroPointsTaskHandler.HandleAsync(assignHeroPointsTask, cancellationToken);
+
                 case StartAdventureTask.Task startAdventureTask:
                     var startAdventureTaskHandler = scope.GetHandler<StartAdventureTask.Task>();
                     return await startAdventureTaskHandler.HandleAsync(startAdventureTask, cancellationToken);

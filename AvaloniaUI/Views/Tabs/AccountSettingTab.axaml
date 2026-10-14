@@ -41,6 +41,19 @@
                 </Border>
                 <Border Classes="box">
                     <StackPanel>
+                        <TextBlock Classes="header" Text="Hero settings" />
+                        <CheckBox x:Name="EnableAutoAssignHeroPoints" Content="Enable auto assign hero points" />
+                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2,0,2">
+                            <Label Content="Points per level (total 4)" VerticalAlignment="Center" />
+                            <TextBox x:Name="HeroPointsFightingStrength" Watermark="Fighting strength" UseFloatingWatermark="True" Width="130" />
+                            <TextBox x:Name="HeroPointsOffBonus"         Watermark="Offence bonus"     UseFloatingWatermark="True" Width="130" />
+                            <TextBox x:Name="HeroPointsDefBonus"         Watermark="Defence bonus"     UseFloatingWatermark="True" Width="130" />
+                            <TextBox x:Name="HeroPointsResources"        Watermark="Resources"         UseFloatingWatermark="True" Width="130" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+                <Border Classes="box">
+                    <StackPanel>
                         <TextBlock Classes="header" Text="Chrome settings" />
                         <CheckBox x:Name="HeadlessChrome" Content="Use headless chrome" />
                     </StackPanel>

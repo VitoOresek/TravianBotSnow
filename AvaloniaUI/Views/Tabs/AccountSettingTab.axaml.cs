@@ -28,6 +28,12 @@ namespace AvaloniaUI.Views.Tabs
                 this.Bind(ViewModel, vm => vm.AccountSettingInput.Tribe, v => v.Tribes.ViewModel).DisposeWith(d);
                 this.Bind(ViewModel, vm => vm.AccountSettingInput.HeadlessChrome, v => v.HeadlessChrome.IsChecked).DisposeWith(d);
                 this.Bind(ViewModel, vm => vm.AccountSettingInput.EnableAutoStartAdventure, v => v.EnableAutoStartAdventure.IsChecked).DisposeWith(d);
+
+                this.Bind(ViewModel, vm => vm.AccountSettingInput.EnableAutoAssignHeroPoints, v => v.EnableAutoAssignHeroPoints.IsChecked).DisposeWith(d);
+                this.Bind(ViewModel, vm => vm.AccountSettingInput.HeroPointsFightingStrength.Value, v => v.HeroPointsFightingStrength.Text).DisposeWith(d);
+                this.Bind(ViewModel, vm => vm.AccountSettingInput.HeroPointsOffBonus.Value, v => v.HeroPointsOffBonus.Text).DisposeWith(d);
+                this.Bind(ViewModel, vm => vm.AccountSettingInput.HeroPointsDefBonus.Value, v => v.HeroPointsDefBonus.Text).DisposeWith(d);
+                this.Bind(ViewModel, vm => vm.AccountSettingInput.HeroPointsResources.Value, v => v.HeroPointsResources.Text).DisposeWith(d);
             });
         }
     }

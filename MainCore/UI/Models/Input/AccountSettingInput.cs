@@ -17,6 +17,11 @@ namespace MainCore.UI.Models.Input
             EnableAutoStartAdventure = settings.GetValueOrDefault(AccountSettingEnums.EnableAutoStartAdventure) == 1;
             FarmInterval.Set(settings.GetValueOrDefault(AccountSettingEnums.FarmIntervalMin), settings.GetValueOrDefault(AccountSettingEnums.FarmIntervalMax));
             UseStartAllButton = settings.GetValueOrDefault(AccountSettingEnums.UseStartAllButton) == 1;
+            EnableAutoAssignHeroPoints = settings.GetValueOrDefault(AccountSettingEnums.EnableAutoAssignHeroPoints) == 1;
+            HeroPointsFightingStrength.Set(settings.GetValueOrDefault(AccountSettingEnums.HeroPointsFightingStrength));
+            HeroPointsOffBonus.Set(settings.GetValueOrDefault(AccountSettingEnums.HeroPointsOffBonus));
+            HeroPointsDefBonus.Set(settings.GetValueOrDefault(AccountSettingEnums.HeroPointsDefBonus));
+            HeroPointsResources.Set(settings.GetValueOrDefault(AccountSettingEnums.HeroPointsResources));
         }
 
         public Dictionary<AccountSettingEnums, int> Get()
@@ -32,6 +37,7 @@ namespace MainCore.UI.Models.Input
 
             var (farmIntervalMin, farmIntervalMax) = FarmInterval.Get();
             var useStartAllButton = UseStartAllButton ? 1 : 0;
+            var autoAssignHeroPoints = EnableAutoAssignHeroPoints ? 1 : 0;
 
             var settings = new Dictionary<AccountSettingEnums, int>()
             {
@@ -53,6 +59,12 @@ namespace MainCore.UI.Models.Input
 
                 { AccountSettingEnums.HeadlessChrome, headlessChrome },
                 { AccountSettingEnums.EnableAutoStartAdventure, autoStartAdventure },
+
+                { AccountSettingEnums.EnableAutoAssignHeroPoints, autoAssignHeroPoints },
+                { AccountSettingEnums.HeroPointsFightingStrength, HeroPointsFightingStrength.Get() },
+                { AccountSettingEnums.HeroPointsOffBonus, HeroPointsOffBonus.Get() },
+                { AccountSettingEnums.HeroPointsDefBonus, HeroPointsDefBonus.Get() },
+                { AccountSettingEnums.HeroPointsResources, HeroPointsResources.Get() },
             };
             return settings;
         }
@@ -65,6 +77,11 @@ namespace MainCore.UI.Models.Input
         public RangeInputViewModel SleepTime { get; } = new();
         public RangeInputViewModel FarmInterval { get; } = new();
 
+        public AmountInputViewModel HeroPointsFightingStrength { get; } = new();
+        public AmountInputViewModel HeroPointsOffBonus { get; } = new();
+        public AmountInputViewModel HeroPointsDefBonus { get; } = new();
+        public AmountInputViewModel HeroPointsResources { get; } = new();
+
         [Reactive]
         private bool _enableAutoLoadVillage;
 
@@ -76,5 +93,8 @@ namespace MainCore.UI.Models.Input
 
         [Reactive]
         private bool _useStartAllButton;
+
+        [Reactive]
+        private bool _enableAutoAssignHeroPoints;
     }
 }

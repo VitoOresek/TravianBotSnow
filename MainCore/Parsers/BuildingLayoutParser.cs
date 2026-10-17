@@ -133,7 +133,8 @@
                 var nodeName = node.Descendants("div").FirstOrDefault(x => x.HasClass("name"));
                 if (nodeName is null) return "";
 
-                return new string(nodeName.ChildNodes[0].InnerText.Where(c => char.IsLetter(c) || char.IsDigit(c)).ToArray());
+                var name = HtmlEntity.DeEntitize(nodeName.ChildNodes[0].InnerText);
+                return BuildingNames.ToEnumName(new string(name.Where(c => char.IsLetter(c) || char.IsDigit(c)).ToArray()));
             }
 
             static int GetLevel(HtmlNode node)

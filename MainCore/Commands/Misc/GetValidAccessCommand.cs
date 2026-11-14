@@ -5,7 +5,11 @@ namespace MainCore.Commands.Misc
     [Handler]
     public static partial class GetValidAccessCommand
     {
-        public sealed record Command(AccountId AccountId, bool IgnoreSleepTime = false) : IAccountCommand;
+        /// <param name="ReuseLastAccess">
+        /// Prefer the most recently used access (keep the same proxy) instead of rotating to the oldest one.
+        /// Used for manual logins so the connection doesn't change between them.
+        /// </param>
+        public sealed record Command(AccountId AccountId, bool IgnoreSleepTime = false, bool ReuseLastAccess = false) : IAccountCommand;
 
         private static async ValueTask<Result<AccessDto>> HandleAsync(
             Command command,
@@ -13,11 +17,14 @@ namespace MainCore.Commands.Misc
             AppDbContext context
             )
         {
-            var (accountId, ignoreSleepTime) = command;
+            var (accountId, ignoreSleepTime, reuseLastAccess) = command;
 
-            var accesses = context.Accesses
-               .Where(x => x.AccountId == accountId.Value)
-               .OrderBy(x => x.LastUsed) // get oldest one
+            var query = context.Accesses
+               .Where(x => x.AccountId == accountId.Value);
+
+            var accesses = (reuseLastAccess
+                    ? query.OrderByDescending(x => x.LastUsed) // get newest one
+                    : query.OrderBy(x => x.LastUsed)) // get oldest one
                .ToDto()
                .ToList();
 
@@ -51,7 +58,7 @@ namespace MainCore.Commands.Misc
             if (access is null) return Stop.Error.WithError("All accesses not working");
 
             if (accesses.Count == 1) return access;
-            if (ignoreSleepTime) return access;
+            if (ignoreSleepTime || reuseLastAccess) return access;
 
             var minSleep = context.ByName(accountId, AccountSettingEnums.SleepTimeMin);
             var timeValid = DateTime.Now.AddMinutes(-minSleep);

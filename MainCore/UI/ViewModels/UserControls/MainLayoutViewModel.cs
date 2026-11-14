@@ -168,7 +168,7 @@ namespace MainCore.UI.ViewModels.UserControls
             }
 
             var getAccessQuery = scope.ServiceProvider.GetRequiredService<GetValidAccessCommand.Handler>();
-            var result = await getAccessQuery.HandleAsync(new(accountId));
+            var result = await getAccessQuery.HandleAsync(new(accountId, ReuseLastAccess: true));
             if (result.IsFailed)
             {
                 await _dialogService.MessageBox.Handle(new MessageBoxData("Warning", result.ToString()));

@@ -93,6 +93,8 @@ if [ -d "$DESKTOP_DIR" ]; then
     # GNOME asks to "Allow Launching" otherwise
     gio set "$DESKTOP_DIR/travianbotsharp.desktop" metadata::trusted true 2>/dev/null || true
 fi
+# "Update TravianBotSharp" shortcut
+if [ -f "$APP_DIR/update.sh" ]; then bash "$APP_DIR/update.sh" --shortcut-only; fi
 
 if [ "$(id -u)" -eq 0 ]; then
     echo "!! You are root. It works (Chrome runs with --no-sandbox) but a normal user account is safer."

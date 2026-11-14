@@ -21,7 +21,13 @@ cd ~/TravianBotSharp
 Run the bot from inside the desktop session. A plain SSH shell has no display, so the window can't open there.
 
 Everything the bot stores stays in that folder: `TBS.db` (accounts and settings), `logs/`, `Data/Cache/` (one Chrome profile per
-account and proxy), `Screenshots/`. To move the bot, copy the folder. To update, extract the new version over it.
+account and proxy), `Screenshots/`. To move the bot, copy the folder.
+
+## Update
+
+Close the bot, then double click **Update TravianBotSharp** on the desktop (or run `./update.sh`). It downloads the
+latest release from [VitoOresek/TravianBotSnow](https://github.com/VitoOresek/TravianBotSnow/releases), backs up `TBS.db`
+to `backups/` (the 10 newest are kept) and replaces the program files. Accounts, settings, logs and Chrome profiles stay.
 
 The first start downloads a chromedriver matching your Chrome and patches it. When Chrome updates, the next start does it again.
 Set `TBS_CHROME_PATH=/path/to/chrome` to use a Chrome binary that is not in the default place.

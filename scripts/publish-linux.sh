@@ -14,7 +14,7 @@ for ARCH in "${ARCHES[@]}"; do
     OUT="$ROOT/dist/TravianBotSharp-linux-$ARCH"
     rm -rf "$OUT"
     "$DOTNET" publish "$ROOT/AvaloniaUI/AvaloniaUI.csproj" -c Release -r "linux-$ARCH" --self-contained true -o "$OUT"
-    cp "$ROOT/scripts/install.sh" "$ROOT/scripts/run.sh" "$ROOT/README-LINUX.md" "$OUT/"
+    cp "$ROOT/scripts/install.sh" "$ROOT/scripts/run.sh" "$ROOT/scripts/update.sh" "$ROOT/README-LINUX.md" "$OUT/"
     cp "$ROOT/AvaloniaUI/Assets/roman_big.png" "$OUT/icon.png"
 
     "$PYTHON" - "$OUT" "$ROOT/dist/TravianBotSharp-linux-$ARCH.tar.gz" <<'EOF'
